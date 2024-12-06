@@ -41,11 +41,11 @@ typedef struct
 {
   int boardSize;
   char ** data;
-} D_BOARD;
+} BOARD;
 
-int initDBoard (D_BOARD * board, const int boardSize_in)
+int initBoard (BOARD * board, const int boardSize_in)
 {
-  board -> boardSize = boardSize_in; //x
+  board -> boardSize = boardSize_in;
 
   // allocate memory
   board -> data = (char **) malloc(board -> boardSize * sizeof(*(board -> data)));
@@ -60,7 +60,7 @@ int initDBoard (D_BOARD * board, const int boardSize_in)
   return EXIT_SUCCESS;
 }
 
-void printDBoard (const D_BOARD * board)
+void printBoard (const BOARD * board)
 {
   for (int j = 0; j < board -> boardSize; ++j) {
     for (int i = 0; i < board -> boardSize; ++i) {
@@ -70,7 +70,7 @@ void printDBoard (const D_BOARD * board)
   }
 }
 
-void freeBoard (D_BOARD * board)
+void freeBoard (BOARD * board)
 {
   for (int j = 0; j < board -> boardSize; ++j)
     free(board -> data[j]);
@@ -99,7 +99,7 @@ bool isValidType (char type)
        || type == 'B');
 }
 
-bool isOnValidSquare (char x_in, int y_in, int boardSize)
+bool isValid (char x_in, int y_in, int boardSize)
 {
   constexpr char X_SHIFT = 'a';
   int xPos = x_in - X_SHIFT;
@@ -113,7 +113,7 @@ bool isOnValidSquare (char x_in, int y_in, int boardSize)
  * does not catch wa1 as a wrong input.
  * does not catch w a 1 as a wrong input.
  */
-int loadPiece (PIECE * p, D_BOARD * board)
+int loadPiece (PIECE * p, BOARD * board)
 {
   // read input
   int y_in;
@@ -138,7 +138,7 @@ int loadPiece (PIECE * p, D_BOARD * board)
     return EXIT_FAILURE;
 
   // check if piece is on the board
-  if (!isOnValidSquare(x_in, y_in, board -> boardSize))
+  if (!isValid(x_in, y_in, board -> boardSize))
     return EXIT_FAILURE;
 
   // check if position is empty
@@ -156,7 +156,7 @@ int loadPiece (PIECE * p, D_BOARD * board)
   return EXIT_SUCCESS;
 }
 
-int loadPieces(D_BOARD * board)
+int loadPieces(BOARD * board)
 {
   printf("Pozice kamenu:\n");
   while (!feof(stdin))
@@ -178,12 +178,12 @@ int main () {
   if (readBoardSize(&boardSize))
     return errorIO();
 
-  D_BOARD board;
-  initDBoard(&board, boardSize);
+  BOARD board;
+  initBoard(&board, boardSize);
   if (loadPieces(&board))
     return errorIO();
 
-  printDBoard(&board);
+  printBoard(&board);
   freeBoard(&board);
   return EXIT_SUCCESS;
 }
