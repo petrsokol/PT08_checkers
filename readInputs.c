@@ -81,13 +81,19 @@ bool isOnValidSquare (char x_in, int y_in, int boardSize)
        && (xPos + yPos) % 2 == 0);
 }
 
-int loadPiece (PIECE * p, const int boardSize, char board[][MAX_BOARD_SIZE])
+/**
+ * does not catch wa1 as a wrong input.
+ * does not catch w a 1 as a wrong input.
+ */
+int loadPiece (PIECE * p, char board[][MAX_BOARD_SIZE], const int boardSize)
 {
-  constexpr int EXPECTED_INPUTS = 3;
-
+  // read input
   int y_in;
   char type_in, x_in;
+  constexpr int EXPECTED_INPUTS = 3;
   int result = scanf(" %c %c%d", &type_in, &x_in, &y_in);
+
+  // adjust inputs for a1 to be at [0, 0]
   int xPos_in = x_in - 'a';
   int yPos_in = y_in - 1;
 
@@ -111,10 +117,12 @@ int loadPiece (PIECE * p, const int boardSize, char board[][MAX_BOARD_SIZE])
   if (board[xPos_in][yPos_in] != ' ')
     return EXIT_FAILURE;
 
+  // edit the piece
   p -> type = type_in;
   p -> xPos = xPos_in;
   p -> yPos = yPos_in;
 
+  // place the piece on board for future reference
   board[xPos_in][yPos_in] = p -> type;
 
   return EXIT_SUCCESS;
@@ -138,6 +146,18 @@ void printBoard (const char board[][MAX_BOARD_SIZE], const int boardSize)
   }
 }
 
+int loadPieces(char board[][MAX_BOARD_SIZE], const int boardSize)
+{
+  printf("Pozice kamenu:\n");
+  while (!feof(stdin))
+  {
+    PIECE p;
+    if (loadPiece(&p, board, boardSize))
+      return EXIT_FAILURE;
+  }
+  return EXIT_SUCCESS;
+}
+
 /*--------------------------------------------------------------*/
 
 /*
@@ -148,26 +168,11 @@ int main () {
   if (readBoardSize(&boardSize))
     return errorIO();
 
-  int max_piece_count_regarding_the_actual_size_of_the_board;
-  if (boardSize == 3)
-    max_piece_count_regarding_the_actual_size_of_the_board = 5;
-  else
-    max_piece_count_regarding_the_actual_size_of_the_board = 2 * boardSize;
-
   char board[MAX_BOARD_SIZE][MAX_BOARD_SIZE];
   initBoard(board);
+  if (loadPieces(board, boardSize))
+    return errorIO();
 
-  int n = 0;
-  PIECE pieces[MAX_BOARD_SIZE * MAX_BOARD_SIZE]; // lepší pomocí append
-  printf("Pozice kamenu:\n");
-  while (!feof(stdin))
-  {
-    PIECE p;
-    if (loadPiece(&p, boardSize, board))
-      return errorIO();
-
-    pieces[n++] = p;
-  }
   printBoard(board, boardSize);
   return EXIT_SUCCESS;
 }
