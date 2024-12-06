@@ -4,7 +4,6 @@
 
 constexpr int MAX_BOARD_SIZE = 26; 
 constexpr int MIN_BOARD_SIZE = 3;
-constexpr int MAX_PIECE_COUNT = MAX_BOARD_SIZE * 2;
 
 int errorIO()
 {
