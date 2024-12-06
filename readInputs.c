@@ -35,20 +35,47 @@ bool isWhite (PIECE * p)
   return (p -> type == 'W' || p -> type == 'w');
 }
 
-typedef struct 
-{
-  int cols;
-  int rows;
-  PIECE data[26][26]; // [x, y]
-} BOARD;
+/*--------------------------------------------------------------*/
 
-typedef struct 
+typedef struct
 {
-  BOARD board;
-  int piecesRemaining;
-  PIECE pieces[100];
-  
-} GAME_STATE;
+  int boardSize;
+  char ** data;
+} D_BOARD;
+
+int initDBoard (D_BOARD * board, const int boardSize_in)
+{
+  board -> boardSize = boardSize_in; //x
+
+  // allocate memory
+  board -> data = (char **) malloc(board -> boardSize * sizeof(*(board -> data)));
+  for (int j = 0; j < board -> boardSize; ++j)
+    board -> data[j] = (char *) malloc(board -> boardSize * sizeof(*(board -> data[j])));
+
+  // start with empty board
+  for (int j = 0; j < board -> boardSize; ++j)
+    for (int i = 0; i < board -> boardSize; ++i)
+      board -> data[j][i] = ' ';
+
+  return EXIT_SUCCESS;
+}
+
+void printDBoard (const D_BOARD * board)
+{
+  for (int j = 0; j < board -> boardSize; ++j) {
+    for (int i = 0; i < board -> boardSize; ++i) {
+      printf("[%c]", board -> data[j][i]);
+    }
+    printf("\n");
+  }
+}
+
+void freeBoard (D_BOARD * board)
+{
+  for (int j = 0; j < board -> boardSize; ++j)
+    free(board -> data[j]);
+  free (board -> data);
+}
 
 /*--------------------------------------------------------------*/
 
@@ -61,6 +88,8 @@ int readBoardSize (int * boardSize)
     return EXIT_FAILURE;
   return EXIT_SUCCESS;
 }
+
+/*--------------------------------------------------------------*/
 
 bool isValidType (char type)
 {
@@ -84,7 +113,7 @@ bool isOnValidSquare (char x_in, int y_in, int boardSize)
  * does not catch wa1 as a wrong input.
  * does not catch w a 1 as a wrong input.
  */
-int loadPiece (PIECE * p, char board[][MAX_BOARD_SIZE], const int boardSize)
+int loadPiece (PIECE * p, D_BOARD * board)
 {
   // read input
   int y_in;
@@ -109,11 +138,11 @@ int loadPiece (PIECE * p, char board[][MAX_BOARD_SIZE], const int boardSize)
     return EXIT_FAILURE;
 
   // check if piece is on the board
-  if (!isOnValidSquare(x_in, y_in, boardSize))
+  if (!isOnValidSquare(x_in, y_in, board -> boardSize))
     return EXIT_FAILURE;
 
   // check if position is empty
-  if (board[xPos_in][yPos_in] != ' ')
+  if (board -> data[yPos_in][xPos_in] != ' ')
     return EXIT_FAILURE;
 
   // edit the piece
@@ -122,36 +151,18 @@ int loadPiece (PIECE * p, char board[][MAX_BOARD_SIZE], const int boardSize)
   p -> yPos = yPos_in;
 
   // place the piece on board for future reference
-  board[xPos_in][yPos_in] = p -> type;
+  board -> data[yPos_in][xPos_in] = p -> type;
 
   return EXIT_SUCCESS;
 }
 
-void initBoard (char board[][MAX_BOARD_SIZE])
-{
-  for (int j = 0; j < MAX_BOARD_SIZE; ++j)
-    for (int i = 0; i < MAX_BOARD_SIZE; ++i)
-      board[i][j] = ' ';
-}
-
-void printBoard (const char board[][MAX_BOARD_SIZE], const int boardSize)
-{
-  for (int j = 0; j < boardSize; ++j) {
-    for (int i = 0; i < boardSize; ++i)
-    {
-      printf("[%c]", board[i][j]);
-    }
-    printf("\n");
-  }
-}
-
-int loadPieces(char board[][MAX_BOARD_SIZE], const int boardSize)
+int loadPieces(D_BOARD * board)
 {
   printf("Pozice kamenu:\n");
   while (!feof(stdin))
   {
     PIECE p;
-    if (loadPiece(&p, board, boardSize))
+    if (loadPiece(&p, board))
       return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
@@ -167,12 +178,13 @@ int main () {
   if (readBoardSize(&boardSize))
     return errorIO();
 
-  char board[MAX_BOARD_SIZE][MAX_BOARD_SIZE];
-  initBoard(board);
-  if (loadPieces(board, boardSize))
+  D_BOARD board;
+  initDBoard(&board, boardSize);
+  if (loadPieces(&board))
     return errorIO();
 
-  printBoard(board, boardSize);
+  printDBoard(&board);
+  freeBoard(&board);
   return EXIT_SUCCESS;
 }
 
