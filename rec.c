@@ -102,7 +102,13 @@ bool getNext (const BOARD * board, int * x, int * y)
     // move to next available square
     *y = *y + ++(*x) / board -> size;
     *x = *x % board -> size;
-    printf("getNext: Moving to [%d, %d].\n", *x, *y);
+
+    // return false if there are no more white pieces
+    if (*x >= board -> size || *y >= board -> size)
+    {
+      printf("getNext: No other pieces were found.\n");
+      return false;
+    }
 
     // return true if [x, y] corresponds to a white piece
     if (hasWhite(board, *x, *y))
@@ -110,15 +116,6 @@ bool getNext (const BOARD * board, int * x, int * y)
       printf("getNext: Found a white piece at [%d, %d].\n", *x, *y);
       return true;
     }
-
-    // return false if there are no more white pieces
-    if (*x >= board -> size - 1 && *y >= board -> size - 1)
-    {
-      printf("getNext: No other pieces were found.\n");
-      return false;
-    }
-
-    printf ("getNext: No white piece on [%d, %d].\n", *x, *y);
   }
 }
 
@@ -273,7 +270,6 @@ int main () {
 
   BOARD board;
   initBoard(&board, size);
-  printBoard(&board);
   if (loadPieces(&board))
     return errorIO();
 
