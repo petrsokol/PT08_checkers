@@ -80,9 +80,46 @@ void freeBoard (BOARD * board)
   free (board -> data);
 }
 
-bool isEmpty (const BOARD * board, int x, int y)
+bool isEmpty (const BOARD * board, const int x, const int y)
 {
   return board -> data[y][x] == BLANK;
+}
+
+bool hasWhite (const BOARD * board, const int x, const int y)
+{
+  return (board -> data[y][x] == PIECE_W || board -> data[y][x] == QUEEN_W);
+}
+
+void posToString (const int x, const int y)
+{
+  printf("%c%c", 'a' + x, '0' + y);
+}
+
+bool getNext (const BOARD * board, int * x, int * y)
+{
+  while (true)
+  {
+    // move to next available square
+    *y = *y + ++(*x) / board -> size;
+    *x = *x % board -> size;
+    printf("getNext: Moving to [%d, %d].\n", *x, *y);
+
+    // return true if [x, y] corresponds to a white piece
+    if (hasWhite(board, *x, *y))
+    {
+      printf("getNext: Found a white piece at [%d, %d].\n", *x, *y);
+      return true;
+    }
+
+    // return false if there are no more white pieces
+    if (*x >= board -> size - 1 && *y >= board -> size - 1)
+    {
+      printf("getNext: No other pieces were found.\n");
+      return false;
+    }
+
+    printf ("getNext: No white piece on [%d, %d].\n", *x, *y);
+  }
 }
 
 /*--------------------------------------------------------------*/
@@ -90,6 +127,8 @@ bool isEmpty (const BOARD * board, int x, int y)
 int readBoardSize (int * size)
 {
   printf("Velikost hraci plochy:\n");
+  constexpr int MAX_BOARD_SIZE = 26;
+  constexpr int MIN_BOARD_SIZE = 3;
   if (scanf(" %d", size) != 1
       || * size < MIN_BOARD_SIZE
       || * size > MAX_BOARD_SIZE)
@@ -99,22 +138,19 @@ int readBoardSize (int * size)
 
 /*--------------------------------------------------------------*/
 
-bool isValidType (char type)
+bool isValidType (const char type)
 {
   return (type == PIECE_W
-       || type == QUEEN_W
        || type == PIECE_B
+       || type == QUEEN_W
        || type == QUEEN_B);
 }
 
-bool isValid (const BOARD * board, char x_in, int y_in)
+bool isValid (const BOARD * board, const int x, const int y)
 {
-  constexpr char X_SHIFT = 'a';
-  int xPos = x_in - X_SHIFT;
-  int yPos = y_in - 1; // indexing from zero
-  return (xPos >= 0 && xPos < board -> size
-       && yPos >= 0 && xPos < board -> size
-       && (xPos + yPos) % 2 == 0);
+  return (x >= 0 && x < board -> size
+       && y >= 0 && y < board -> size
+       && (x + y) % 2 == 0);
 }
 
 /*--------------------------------------------------------------*/
@@ -149,6 +185,7 @@ int movePiece (BOARD * board, int * captures, int xFrom, int yFrom, int xTo, int
   // moving the piece
   board -> data[yFrom][xFrom] = BLANK;
   board -> data[yTo][xTo] = piece;
+  return EXIT_SUCCESS;
 }
 
 /*--------------------------------------------------------------*/
@@ -175,19 +212,31 @@ int loadPiece (PIECE * p, BOARD * board)
 
   // check for correct input format
   if (result != EXPECTED_INPUTS)
+  {
+    printf("loadPiece: wrong input.\n");
     return EXIT_FAILURE;
+  }
 
   // check for correct type of piece
   if (!isValidType(type_in))
+  {
+    printf("loadPiece: invalid piece.\n");
     return EXIT_FAILURE;
+  }
 
   // check if piece is on the board
-  if (!isValid(board, x_in, y_in))
+  if (!isValid(board, xPos_in, yPos_in))
+  {
+    printf("loadPiece: invalid position.\n");
     return EXIT_FAILURE;
+  }
 
   // check if position is empty
-  if (board -> data[yPos_in][xPos_in] != BLANK)
+  if (!isEmpty(board, xPos_in, yPos_in))
+  {
+    printf("loadPiece: position not empty.\n");
     return EXIT_FAILURE;
+  }
 
   // edit the piece
   p -> type = type_in;
@@ -224,10 +273,21 @@ int main () {
 
   BOARD board;
   initBoard(&board, size);
+  printBoard(&board);
   if (loadPieces(&board))
     return errorIO();
 
   printBoard(&board);
+
+  int x = -1;
+  int y = 0;
+  int sum = 0;
+  while (getNext(&board, &x, &y))
+  {
+    printf("> main: ready to operate with [%d, %d]\n", x, y);
+    sum++;
+  }
+  printf ("> main: in total found %d white pieces.\n", sum);
   freeBoard(&board);
   return EXIT_SUCCESS;
 }
