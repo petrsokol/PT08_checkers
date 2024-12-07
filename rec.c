@@ -63,9 +63,10 @@ int initBoard (BOARD * board, const int boardSize_in)
   return EXIT_SUCCESS;
 }
 
+// prints the board with [0, 0] at bottom left corner
 void printBoard (const BOARD * board)
 {
-  for (int j = 0; j < board -> size; ++j) {
+  for (int j = board -> size - 1; j >= 0; --j) {
     for (int i = 0; i < board -> size; ++i) {
       printf("[%c]", board -> data[j][i]);
     }
@@ -88,6 +89,11 @@ bool isEmpty (const BOARD * board, const int x, const int y)
 bool hasWhite (const BOARD * board, const int x, const int y)
 {
   return (board -> data[y][x] == PIECE_W || board -> data[y][x] == QUEEN_W);
+}
+
+bool hasWhiteQueen (const BOARD * board, const int x, const int y)
+{
+  return (board -> data[y][x] == QUEEN_W);
 }
 
 void posToString (const int x, const int y)
@@ -158,7 +164,7 @@ int movePiece (BOARD * board, int * captures, int xFrom, int yFrom, int xTo, int
   char piece = board -> data[yFrom][xFrom];
 
   // check for invalid starting position
-  if (!isValid(board, xFrom, yFrom) || !isEmpty(board, xFrom, yFrom))
+  if (!isValid(board, xFrom, yFrom))
   {
     printf("movePiece: ilegal start pos [%d, %d]\n", xFrom, yFrom);
     return EXIT_FAILURE;
@@ -260,6 +266,79 @@ int loadPieces(BOARD * board)
 
 /*--------------------------------------------------------------*/
 
+void printCross (const BOARD * board, const int x, const int y)
+{
+  for (int j = 1; j >= -1; j -= 2)
+    for (int i = -1; i <= 1; i += 2)
+    {
+      printf(".printcross: direction: [%d, %d]\n", i, j);
+    }
+}
+
+int movesForPiece (const BOARD * board, const int x, const int y)
+{
+  int sum = 0;
+  for (int i = -1; i <= 1; i += 2)
+  {
+    int xCandidate = x + i;
+    int yCandidate = y + 1;
+    if (isValid(board, xCandidate, yCandidate)
+      &&isEmpty(board, xCandidate, yCandidate))
+    {
+      printf(".movesForPiece: can move to [%d, %d]\n", xCandidate, yCandidate);
+      sum++;
+    }
+  }
+  return sum;
+}
+
+int movesForQueen (const BOARD * board, const int x, const int y)
+{
+  int sum = 0;
+  for (int j = 1; j >= -1; j -= 2)
+    for (int i = -1; i <= 1; i += 2)
+      for (int k = 0; k < board -> size; ++k)
+      {
+        int xCandidate = x + k * i;
+        int yCandidate = y + k * j;
+
+        // cross reaches end of board
+        if (!isValid(board, xCandidate, yCandidate))
+          break;
+
+        // cross reaches non-empty square
+        if (!isEmpty(board, xCandidate, yCandidate))
+          break;
+
+        printf(".movesForQueen: can move to [%d, %d]\n", xCandidate, yCandidate);
+        sum++;
+      }
+  return sum;
+}
+
+int allMoves (const BOARD * board, int * moves, int * captures)
+{
+  int x = -1;
+  int y = 0;
+  int foundWhitePieces = 0;
+  int totalMoves = 0; // moves without captures
+  while (getNext(board, &x, &y))
+  {
+    foundWhitePieces++;
+    printf("> main: ready to operate with piece %c at [%d, %d]\n", board -> data[y][x], x, y);
+    if (hasWhiteQueen(board, x, y))
+      totalMoves += movesForQueen(board, x, y);
+    else
+      totalMoves += movesForPiece(board, x, y);
+  }
+  printf ("-> main: in total found %d white pieces.\n", foundWhitePieces);
+  printf ("-> main: there are %d available moves for white in this position.\n", totalMoves);
+
+  return totalMoves;
+}
+
+/*--------------------------------------------------------------*/
+
 /*
 program to load checker pieces into an array to be used for game logic later
 */
@@ -272,18 +351,12 @@ int main () {
   initBoard(&board, size);
   if (loadPieces(&board))
     return errorIO();
-
   printBoard(&board);
 
-  int x = -1;
-  int y = 0;
-  int sum = 0;
-  while (getNext(&board, &x, &y))
-  {
-    printf("> main: ready to operate with [%d, %d]\n", x, y);
-    sum++;
-  }
-  printf ("> main: in total found %d white pieces.\n", sum);
+  int moves = 0;
+  int captures = 0;
+  allMoves(&board, &moves, &captures);
+
   freeBoard(&board);
   return EXIT_SUCCESS;
 }
@@ -291,4 +364,12 @@ int main () {
 /*
 kameny budou zvlášť ve vektoru a zvlášť na šachovnici, musíš se vypořádat s duplikátama
  - funkce bool captureAt(int, int); se musí vypořádat s oběma zároveň atd.
+
+w c3
+w f2
+b d2
+b d4
+b d6
+b b6
+b f6
 */
